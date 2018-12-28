@@ -1,0 +1,7 @@
+nomenclature:
+  name: developer
+  verboseName: Developer
+description: Build for, on and with Omniport
+baseUrls:
+  http: developer/
+isApi: true
