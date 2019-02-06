@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 
 from open_auth.models import Application
 from open_auth.serializers.application import (
@@ -12,6 +12,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     Viewset for CRUD operations on Application
     """
 
+    permission_classes = [permissions.IsAuthenticated, ]
     serializer_class = ApplicationDetailSerializer
     pagination_class = None
 
