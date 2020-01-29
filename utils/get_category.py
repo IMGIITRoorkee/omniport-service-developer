@@ -14,7 +14,7 @@ def get_category():
     ).nomenclature.name
     service_verbose = settings.DISCOVERY.get_app_configuration(
         'developer'
-    ).nomenclature.verboseName
+    ).nomenclature.verbose_name
     category, _ = Category.objects.get_or_create(
         slug=service_name,
         name=service_verbose,
