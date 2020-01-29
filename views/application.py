@@ -62,10 +62,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         old_team_members = application.team_members.all()
         old_team_member_ids = list()
         new_team_member_ids = list()
-        for old_member in old_team_members:
-            old_team_member_ids.append(old_member.id)
-        for new_member in new_team_members:
-            new_team_member_ids.append(new_member.get('id'))
+        if old_team_members:
+            for old_member in old_team_members:
+                old_team_member_ids.append(old_member.id)
+        if new_team_members:
+            for new_member in new_team_members:
+                new_team_member_ids.append(new_member.get('id'))
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(
