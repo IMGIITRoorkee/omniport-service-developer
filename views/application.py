@@ -1,16 +1,16 @@
 from rest_framework import response
-from rest_framework import viewsets, permissions
-
+from rest_framework import viewsets, permissions, generics
+from django.contrib.auth.hashers import check_password
 from open_auth.models import Application
 from open_auth.serializers.application import (
     ApplicationDetailSerializer,
     ApplicationListSerializer,
+    ApplicationHiddenDetailSerializer
 )
-
+from django.http import HttpResponse
 from developer.utils.membership_notifications import (
     send_membership_notification
 )
-
 
 class ApplicationViewSet(viewsets.ModelViewSet):
     """
@@ -93,3 +93,28 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 list(set(new_team_member_ids)-set(old_team_member_ids))
             )
         return response.Response(serializer.data)
+
+    
+class ApplicationHiddenDetailView(generics.GenericAPIView):
+    """
+        view details of application which should not be exposed directly 
+    """
+
+    permission_classes = [permissions.IsAuthenticated, ]
+
+    def post(self,request,*args,**kwargs):
+        application = Application.objects.get(pk=kwargs['id'])
+        try:
+            application = Application.objects.get(pk=kwargs['id'])
+            application_team_members = application.team_members.all()
+            for team_member in application_team_members:
+                if team_member.id == request.person.id:
+                    if request.user.check_password(request.data['password']):
+                        return response.Response(ApplicationHiddenDetailSerializer(application).data)
+                    else:
+                        return HttpResponse("Wrong Password",status=403)
+            
+            return HttpResponse("Requested user is not a team-member",status=403)
+        
+        except:
+            return HttpResponse("Error",status=404)
