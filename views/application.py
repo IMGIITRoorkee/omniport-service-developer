@@ -1,13 +1,17 @@
 from rest_framework import response
+
 from rest_framework import viewsets, permissions, generics
+
 from django.contrib.auth.hashers import check_password
+
 from open_auth.models import Application
+
 from open_auth.serializers.application import (
     ApplicationDetailSerializer,
     ApplicationListSerializer,
-    ApplicationHiddenDetailSerializer
+    ApplicationHiddenDetailSerializer,
 )
-from django.http import HttpResponse
+
 from developer.utils.membership_notifications import (
     send_membership_notification
 )
@@ -97,24 +101,33 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     
 class ApplicationHiddenDetailView(generics.GenericAPIView):
     """
-        view details of application which should not be exposed directly 
+    View details of Application which should not be exposed directly 
     """
 
     permission_classes = [permissions.IsAuthenticated, ]
 
     def post(self,request,*args,**kwargs):
-        application = Application.objects.get(pk=kwargs['id'])
+
+        """
+        Authenticate if the requesting user is Team Member
+        of the application and check the password entered.
+        :param request: the request being processed
+        :param args: arguments
+        :param kwargs: keyword arguments
+        :return:response containing client_secret
+        """
+
         try:
-            application = Application.objects.get(pk=kwargs['id'])
+            application = Application.objects.get(pk = request.data.get('id'))
             application_team_members = application.team_members.all()
             for team_member in application_team_members:
                 if team_member.id == request.person.id:
-                    if request.user.check_password(request.data['password']):
+                    if request.user.check_password(request.data.get('password')):
                         return response.Response(ApplicationHiddenDetailSerializer(application).data)
                     else:
-                        return HttpResponse("Wrong Password",status=403)
+                        return response.Response("Wrong Password",status=403)
             
-            return HttpResponse("Requested user is not a team-member",status=403)
+            return response.Response("Requested user is not a team-member",status=403)
         
         except:
-            return HttpResponse("Error",status=404)
+            return response.Response("Error",status=404)
