@@ -1,8 +1,6 @@
 from rest_framework import response, status
 from rest_framework import viewsets, permissions, generics
 
-from django.contrib.auth.hashers import check_password
-
 from open_auth.models import Application
 from open_auth.serializers.application import (
     ApplicationDetailSerializer,
