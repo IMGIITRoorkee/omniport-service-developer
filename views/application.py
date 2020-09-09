@@ -1,11 +1,9 @@
-from rest_framework import response
-
+from rest_framework import response, status
 from rest_framework import viewsets, permissions, generics
 
 from django.contrib.auth.hashers import check_password
 
 from open_auth.models import Application
-
 from open_auth.serializers.application import (
     ApplicationDetailSerializer,
     ApplicationListSerializer,
@@ -106,7 +104,7 @@ class ApplicationHiddenDetailView(generics.GenericAPIView):
 
     permission_classes = [permissions.IsAuthenticated, ]
 
-    def post(self,request,*args,**kwargs):
+    def post(self, request, *args, **kwargs):
 
         """
         Authenticate if the requesting user is Team Member
@@ -114,20 +112,34 @@ class ApplicationHiddenDetailView(generics.GenericAPIView):
         :param request: the request being processed
         :param args: arguments
         :param kwargs: keyword arguments
-        :return:response containing client_secret
+        :return: response containing client_secret
         """
 
         try:
             application = Application.objects.get(pk = request.data.get('id'))
-            application_team_members = application.team_members.all()
-            for team_member in application_team_members:
-                if team_member.id == request.person.id:
-                    if request.user.check_password(request.data.get('password')):
-                        return response.Response(ApplicationHiddenDetailSerializer(application).data)
-                    else:
-                        return response.Response("Wrong Password",status=403)
+
+            if application.team_members.filter(id = request.person.id).exists():
+
+                if request.user.check_password(request.data.get('password')):
+                    return response.Response(
+                        data = ApplicationHiddenDetailSerializer(application).data,
+                        status = status.HTTP_200_OK,
+                    )
+
+                else:
+                    return response.Response(
+                        data = 'Wrong Password',
+                        status = status.HTTP_403_FORBIDDEN,
+                    )
             
-            return response.Response("Requested user is not a team-member",status=403)
+            else:
+                return response.Response(
+                    data = 'Requested user is not a team-member.', 
+                    status = status.HTTP_403_FORBIDDEN
+                )
         
-        except:
-            return response.Response("Error",status=404)
+        except Application.DoesNotExist:
+            return response.Response(
+                data = 'Requested application does not exist.', 
+                status = status.HTTP_404_NOT_FOUND
+            )
