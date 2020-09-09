@@ -10,6 +10,6 @@ router = routers.SimpleRouter()
 router.register(r'application', ApplicationViewSet, basename='application')
 
 urlpatterns = [
-    path('application/secret_data/', ApplicationHiddenDetailView.as_view(), name="hidden-detail"),
+    path('application/secret_data/', ApplicationHiddenDetailView.as_view(), name='hidden-detail'),
     path('', include(router.urls)),
 ]
