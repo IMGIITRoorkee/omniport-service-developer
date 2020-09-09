@@ -12,6 +12,7 @@ from developer.utils.membership_notifications import (
     send_membership_notification
 )
 
+
 class ApplicationViewSet(viewsets.ModelViewSet):
     """
     Viewset for CRUD operations on Application
@@ -94,16 +95,15 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             )
         return response.Response(serializer.data)
 
-    
+
 class ApplicationHiddenDetailView(generics.GenericAPIView):
     """
-    View details of Application which should not be exposed directly 
+    View details of Application which should not be exposed directly
     """
 
     permission_classes = [permissions.IsAuthenticated, ]
 
     def post(self, request, *args, **kwargs):
-
         """
         Authenticate if the requesting user is Team Member
         of the application and check the password entered.
@@ -114,30 +114,30 @@ class ApplicationHiddenDetailView(generics.GenericAPIView):
         """
 
         try:
-            application = Application.objects.get(pk = request.data.get('id'))
+            app = Application.objects.get(pk=request.data.get('id'))
 
-            if application.team_members.filter(id = request.person.id).exists():
+            if app.team_members.filter(id=request.person.id).exists():
 
                 if request.user.check_password(request.data.get('password')):
                     return response.Response(
-                        data = ApplicationHiddenDetailSerializer(application).data,
-                        status = status.HTTP_200_OK,
+                        data=ApplicationHiddenDetailSerializer(app).data,
+                        status=status.HTTP_200_OK,
                     )
 
                 else:
                     return response.Response(
-                        data = 'Wrong Password',
-                        status = status.HTTP_403_FORBIDDEN,
+                        data='Wrong Password',
+                        status=status.HTTP_403_FORBIDDEN,
                     )
-            
+
             else:
                 return response.Response(
-                    data = 'Requested user is not a team-member.', 
-                    status = status.HTTP_403_FORBIDDEN
+                    data='Requested user is not a team-member.',
+                    status=status.HTTP_403_FORBIDDEN,
                 )
-        
+
         except Application.DoesNotExist:
             return response.Response(
-                data = 'Requested application does not exist.', 
-                status = status.HTTP_404_NOT_FOUND
+                data='Requested application does not exist.',
+                status=status.HTTP_404_NOT_FOUND,
             )
