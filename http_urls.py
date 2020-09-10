@@ -17,9 +17,5 @@ urlpatterns = [
         ApplicationHiddenDetailView.as_view(),
         name='hidden-detail',
     ),
-    path
-    (
-        '',
-        include(router.urls)
-    ),
+    path('', include(router.urls)),
 ]
