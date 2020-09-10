@@ -114,19 +114,26 @@ class ApplicationHiddenDetailView(generics.GenericAPIView):
         """
 
         try:
-            app = Application.objects.get(pk=request.data.get('id'))
+            data = request.data
+            application_id = data.get('id')
+            user_password = data.get('password')
+            person = request.person
+            user = request.user
+            user_id = person.id
+            application = Application.objects.get(pk=application_id)
+            application_team_members = application.team_members
 
-            if app.team_members.filter(id=request.person.id).exists():
+            if application_team_members.filter(id=user_id).exists():
 
-                if request.user.check_password(request.data.get('password')):
+                if user.check_password(user_password):
                     return response.Response(
-                        data=ApplicationHiddenDetailSerializer(app).data,
+                        data=ApplicationHiddenDetailSerializer(application).data,
                         status=status.HTTP_200_OK,
                     )
 
                 else:
                     return response.Response(
-                        data='Wrong Password',
+                        data='Wrong password',
                         status=status.HTTP_403_FORBIDDEN,
                     )
 
