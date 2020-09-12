@@ -117,6 +117,13 @@ class ApplicationHiddenDetailView(generics.GenericAPIView):
             data = request.data
             application_id = data.get('id')
             user_password = data.get('password')
+
+            if not all([application_id, user_password]):
+                return response.Response(
+                    data='Empty application ID or password received.',
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             person = request.person
             user = request.user
             user_id = person.id
@@ -152,11 +159,5 @@ class ApplicationHiddenDetailView(generics.GenericAPIView):
         except ValueError:
             return response.Response(
                 data='Incorrect application ID',
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        except Exception as e:
-            return response.Response(
-                data='Incorrect payload',
                 status=status.HTTP_400_BAD_REQUEST,
             )
