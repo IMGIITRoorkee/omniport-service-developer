@@ -148,3 +148,15 @@ class ApplicationHiddenDetailView(generics.GenericAPIView):
                 data='Requested application does not exist.',
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+        except ValueError:
+            return response.Response(
+                data='Incorrect application ID',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as e:
+            return response.Response(
+                data='Incorrect payload',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
