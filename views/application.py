@@ -1,10 +1,11 @@
-from rest_framework import response
-from rest_framework import viewsets, permissions
+from rest_framework import response, status
+from rest_framework import viewsets, permissions, generics
 
 from open_auth.models import Application
 from open_auth.serializers.application import (
     ApplicationDetailSerializer,
     ApplicationListSerializer,
+    ApplicationHiddenDetailSerializer,
 )
 
 from developer.utils.membership_notifications import (
@@ -93,3 +94,70 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 list(set(new_team_member_ids)-set(old_team_member_ids))
             )
         return response.Response(serializer.data)
+
+
+class ApplicationHiddenDetailView(generics.GenericAPIView):
+    """
+    View details of Application which should not be exposed directly
+    """
+
+    permission_classes = [permissions.IsAuthenticated, ]
+
+    def post(self, request, *args, **kwargs):
+        """
+        Authenticate if the requesting user is Team Member
+        of the application and check the password entered.
+        :param request: the request being processed
+        :param args: arguments
+        :param kwargs: keyword arguments
+        :return: response containing client_secret
+        """
+
+        try:
+            data = request.data
+            application_id = data.get('id')
+            user_password = data.get('password')
+
+            if not all([application_id, user_password]):
+                return response.Response(
+                    data='Empty application ID or password received.',
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            person = request.person
+            user = request.user
+            user_id = person.id
+            application = Application.objects.get(pk=application_id)
+            application_team_members = application.team_members
+
+            if application_team_members.filter(id=user_id).exists():
+
+                if user.check_password(user_password):
+                    return response.Response(
+                        data=ApplicationHiddenDetailSerializer(application).data,
+                        status=status.HTTP_200_OK,
+                    )
+
+                else:
+                    return response.Response(
+                        data='Wrong password',
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
+            else:
+                return response.Response(
+                    data='Requested user is not a team-member.',
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        except Application.DoesNotExist:
+            return response.Response(
+                data='Requested application does not exist.',
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        except ValueError:
+            return response.Response(
+                data='Incorrect application ID',
+                status=status.HTTP_400_BAD_REQUEST,
+            )
