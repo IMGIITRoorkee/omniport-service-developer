@@ -47,7 +47,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """
-        Update membership status of the application member
+        Update membership status of the application member,
+        Update the is_approved status to false if scope is edited
         :param request: the request being processed
         :param args: arguments
         :param kwargs: keyword arguments
@@ -71,6 +72,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 new_team_member_ids.append(new_member.get('id'))
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        
+        # Change approval status to false if data points requested have changed
+        data_points = request.data.get('data_points')
+        if (data_points 
+                and not (set(instance.data_points) == set(data_points))):
+            instance.is_approved = False
+
         serializer = self.get_serializer(
             instance,
             data=request.data,
